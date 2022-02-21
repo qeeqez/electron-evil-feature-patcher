@@ -81,13 +81,14 @@ const replacements = [
         name: 'DevTools listening message',
         search: /\0\nDevTools listening on ws:\/\/%s%s\n\0/g,
         replace: '\0%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n\0'
-    },
-    {
-        name: 'Debugger listening message',
-        search: /\0Debugger listening on %s\n\0/g,
-        replace: '\0%s%s%s%s%s%s%s%s%s%s%s%s\n\0'
     }
 ];
+
+const replacementBeforeV15 = {
+    name: 'Debugger listening message',
+    search: /Debugger listening/g,
+    replace: '%s%s%s%s%s%s%s%s%s'
+}
 
 function patch(options) {
     const { verbose } = options;
@@ -112,8 +113,12 @@ function patch(options) {
     if (verbose) {
         console.log(`Found version: ${electronVersion}`);
     }
-    if (electronVersion.split('.')[0] < 12) {
+    const electronVersionMajor = electronVersion.split('.')[0];
+    if (electronVersionMajor < 12) {
         throw new Error(`Minimal supported Electron version is 12, found ${electronVersion}`);
+    }
+    if(electronVersionMajor < 15) {
+        replacements.push(replacementBeforeV15);
     }
     data = setFuseWireStatus(data, FuseConst.RunAsNode, false);
     if (verbose) {
